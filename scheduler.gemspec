@@ -18,8 +18,8 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "rails", "~> 5.2.2"
   
-  spec.add_dependency "bson_ext", "~> 1.12.5"
   spec.add_dependency "mongoid",  "~> 7.0.2"
+  spec.add_dependency "bson_ext"
   spec.add_dependency "whenever", "~> 0.10.0"
 
   spec.add_development_dependency "rails-dev-tools"
