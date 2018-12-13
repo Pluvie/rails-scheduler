@@ -10,12 +10,36 @@ module Scheduler
     attr_accessor :configuration
 
     ##
-    # Method to configure various Scheduler options.
+    # Initializes configuration.
     #
     # @return [Scheduler::Configuration] the configuration class for Scheduler.
-    def self.configure
-      self.configuration ||= Scheduler::Configuration.new
-      yield configuration
+    def configuration
+      @configuration || Scheduler::Configuration.new
+    end
+
+    ##
+    # Method to configure various Scheduler options.
+    #
+    # @return [nil]
+    def configure
+      @configuration ||= Scheduler::Configuration.new
+      yield @configuration
+    end
+
+    ##
+    # Gets scheduler pid file.
+    #
+    # @return [String] the pid file.
+    def pid_file
+      '/tmp/rails-scheduler.pid'
+    end
+
+    ##
+    # Gets scheduler main process pid.
+    #
+    # @return [Integer] main process pid.
+    def pid
+      File.read(self.pid_file).to_i rescue nil
     end
 
     ##
@@ -26,10 +50,10 @@ module Scheduler
       scheduler_pid = Process.fork do
         begin
           Process.daemon(true)
-          File.open('/tmp/rails-scheduler.pid', 'w+') do |pidfile|
+          File.open(self.pid_file, 'w+') do |pidfile|
             pidfile.puts Process.pid
           end
-          scheduler = Scheduler.new
+          scheduler = Scheduler::MainProcess.new
         rescue StandardError => e
           Rails.logger.error "#{e.class}: #{e.message} (#{e.backtrace.first})".red
         end
@@ -43,18 +67,9 @@ module Scheduler
     #
     # @return [nil]
     def stop
-      Job.running.each do |job|
-        begin
-          Process.kill :QUIT, job.pid if job.pid.present?
-        rescue Errno::ESRCH, Errno::EPERM
-        ensure
-          job.status!(:queued)
-        end
-      end
-
       begin  
-        Process.kill :QUIT, File.read('/tmp/rails-scheduler.pid').to_i
-        FileUtils.rm('/tmp/rails-scheduler.pid')
+        Process.kill :TERM, Scheduler.pid
+        FileUtils.rm(self.pid_file)
       rescue Errno::ENOENT, Errno::ESRCH
       end
     end

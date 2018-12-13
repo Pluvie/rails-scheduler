@@ -1,4 +1,4 @@
-class ExampleJob
+class ExampleSchedulableModel
   
   include Scheduler::Schedulable
 

@@ -39,14 +39,15 @@ module Scheduler
           "Make sure to add 'include Scheduler::Schedulable' to your class."
       end
       
-      self.background
+      @logger.info "[Scheduler:#{@pid}] Starting scheduler..".cyan
+      self.start_loop
     end
   
     ##
     # Main loop.
     #
     # @return [nil]
-    def background
+    def start_loop
       loop do
         begin
           # Loads up a job queue.
@@ -79,9 +80,11 @@ module Scheduler
           if scheduled_jobs.any?
             @logger.info "[Scheduler:#{@pid}] Launched #{scheduled_jobs.count} "\
               "jobs: #{scheduled_jobs.map(&:id).map(&:to_s).join(', ')}.".cyan
-          else
+          elsif jobs_to_schedule == 0
             @logger.warn "[Scheduler:#{@pid}] No jobs launched, reached maximum "\
               "number of concurrent jobs. Jobs in queue: #{queue.inspect}.".yellow
+          else
+            @logger.info "[Scheduler:#{@pid}] No jobs in queue.".cyan
           end
   
           # Checks for completed jobs: clears up queue and kills any zombie pid
@@ -98,13 +101,31 @@ module Scheduler
           end
   
           # Waits the specified amount of time before next iteration
-          sleep @loop_interval
+          sleep @polling_interval
         rescue StandardError => error
           @logger.error "[Scheduler:#{@pid}] Error #{error.message}".red
           @logger.error error.backtrace.select { |line| line.include?('app') }.join("\n").red
-        rescue Interrupt
-          @logger.warn "[Scheduler:#{@pid}] Received interrupt, terminating scheduler..".yellow
-          break
+        rescue SignalException => signal
+          if signal.message.in? [ 'SIGINT', 'SIGTERM', 'SIGQUIT' ]
+            @logger.warn "[Scheduler:#{@pid}] Received interrupt, terminating scheduler..".yellow
+            reschedule_running_jobs
+            break
+          end
+        end
+      end
+    end
+
+    ##
+    # Reschedules currently running jobs.
+    #
+    # @return [nil]
+    def reschedule_running_jobs
+      @job_class.running.each do |job|
+        begin
+          Process.kill :QUIT, job.pid if job.pid.present?
+        rescue Errno::ESRCH, Errno::EPERM
+        ensure
+          job.schedule
         end
       end
     end

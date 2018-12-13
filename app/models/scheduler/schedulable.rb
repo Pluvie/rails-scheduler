@@ -54,6 +54,28 @@ module Scheduler
             Scheduler::Schedulable::LOG_LEVELS
           end
 
+          ##
+          # Creates an instance of this class and calls :perform_later.
+          #
+          # @param [String] job_class the class of the job to run.
+          # @param [Array] *job_args job arguments
+          #
+          # @return [Object] the created job.
+          def perform_later(job_class, *job_args)
+            self.create(class_name: job_class, args: job_args).perform_later
+          end
+
+          ##
+          # Creates an instance of this class and calls :perform_now.
+          #
+          # @param [String] job_class the class of the job to run.
+          # @param [Array] *job_args job arguments
+          #
+          # @return [Object] the created job.
+          def perform_now(job_class, *job_args)
+            self.create(class_name: job_class, args: job_args).perform_now
+          end
+
         end
 
       end
@@ -87,14 +109,17 @@ module Scheduler
 
       ##
       # Performs job when queue is available.
-      # On test or development env, the job is performed with ActiveJob.
-      # On production env, the job is performed with Scheduler.
+      # On test or development env, the job is performed by ActiveJob queue,
+      # if configured on the Scheduler configuration.
+      # On production env, the job is performed only with a Scheduler::MainProcess.
       #
       # @return [Object] the job class.
       def perform_later
         self.schedule
         if Rails.env.development? or Rails.env.test?
-          job_class.set(wait: 5.seconds).perform_later(self.class.name, self.id.to_s, *self.args)
+          if Scheduler.configuration.perform_jobs_in_test_or_development
+            job_class.set(wait: 5.seconds).perform_later(self.class.name, self.id.to_s, *self.args)
+          end
         end
         self
       end
