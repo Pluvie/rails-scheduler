@@ -5,7 +5,7 @@ require "scheduler/version"
 
 # Describe your gem and declare its dependencies:
 Gem::Specification.new do |spec|
-  spec.name        = "rails-scheduler"
+  spec.name        = "rails-mongoid-scheduler"
   spec.version     = Scheduler::VERSION
   spec.authors     = ["Francesco Ballardin"]
   spec.email       = ["francesco.ballardin@gmail.com"]
