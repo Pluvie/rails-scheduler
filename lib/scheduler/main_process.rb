@@ -80,11 +80,13 @@ module Scheduler
           if scheduled_jobs.any?
             @logger.info "[Scheduler:#{@pid}] Launched #{scheduled_jobs.count} "\
               "jobs: #{scheduled_jobs.map(&:id).map(&:to_s).join(', ')}.".cyan
-          elsif jobs_to_schedule == 0
-            @logger.warn "[Scheduler:#{@pid}] No jobs launched, reached maximum "\
-              "number of concurrent jobs. Jobs in queue: #{queue.inspect}.".yellow
           else
-            @logger.info "[Scheduler:#{@pid}] No jobs in queue.".cyan
+            if schedulable_jobs.count == 0
+              @logger.info "[Scheduler:#{@pid}] No jobs in queue.".cyan
+            else
+              @logger.warn "[Scheduler:#{@pid}] No jobs launched, reached maximum "\
+                "number of concurrent jobs. Jobs in queue: #{schedulable_jobs.count}.".yellow
+            end
           end
   
           # Checks for completed jobs: clears up queue and kills any zombie pid

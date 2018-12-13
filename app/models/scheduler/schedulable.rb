@@ -55,6 +55,21 @@ module Scheduler
           end
 
           ##
+          # Returns the corresponding log color if this level.
+          #
+          # @param [Symbol] level log level.
+          #
+          # @return [Symbol] the color.
+          def log_color(level)
+            case level
+            when :debug then :green
+            when :info then :cyan
+            when :warn then :yellow
+            when :error then :red
+            end
+          end
+
+          ##
           # Creates an instance of this class and calls :perform_later.
           #
           # @param [String] job_class the class of the job to run.
@@ -167,6 +182,8 @@ module Scheduler
       def log(level, message)
         raise ArgumentError.new("The given log level '#{level}' is not valid. "\
           "Valid log levels are: #{LOG_LEVELS.join(', ')}") unless level.in? LOG_LEVELS
+        Scheduler.configuration.logger.send level,
+          "[#{self.class}:#{self.id}] #{message}".send(self.class.log_color level)
         self.update(logs: logs.push([level, message]))
       end
 
