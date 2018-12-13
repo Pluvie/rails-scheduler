@@ -19,6 +19,21 @@ RSpec.shared_examples "a schedulable resource" do
     resource = resource_class.new resource_attributes
     expect(resource.respond_to? :schedule).to be true
   end
+
+  it "can be progressed to a given amount" do
+    resource = resource_class.create resource_attributes
+    progress = rand(51.0..90.0)
+    resource.progress! progress
+    expect(resource.reload.progress).to eq progress
+  end
+
+  it "can be progressed by a given amount" do
+    resource = resource_class.create resource_attributes
+    progress = rand(1.0..10.0)
+    previous_progress = resource.progress
+    resource.progress_by! progress
+    expect(resource.reload.progress).to eq (previous_progress + progress)
+  end
   
   context "when it is scheduled to execute" do
     
@@ -43,6 +58,36 @@ RSpec.shared_examples "a schedulable resource" do
       expect(resource.backtrace.nil?).to be true
       expect(resource.completed_at.nil?).to be true
       expect(resource.executed_at.nil?).to be true
+    end
+
+  end
+
+  context "when it is set to perform later" do
+
+    it "creates an instance of the resource class" do
+      resource = resource_class.new resource_attributes
+      resource.perform_later
+      expect(resource_class.find(resource.id)).to_not be nil
+    end
+
+    it "queues a SchedulerJob in ActiveJob queue" do
+      expect {
+        resource = resource_class.new resource_attributes
+        resource.perform_later
+      }.to have_enqueued_job(SchedulerJob).with do |job_class, job_id, *args|
+        expect(job_class).to eq resource_class
+        expect(job_id).to eq resource.id.to_s
+      end
+    end
+
+  end
+
+  context "when it is performed" do
+
+    it "performs a SchedulerJob with specified args" do
+      resource = resource_class.new resource_attributes
+      job = resource.perform_now
+      expect(job.reload.status).to eq :completed
     end
 
   end

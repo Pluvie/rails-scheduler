@@ -86,6 +86,32 @@ module Scheduler
       end
 
       ##
+      # Performs job when queue is available.
+      # On test or development env, the job is performed with ActiveJob.
+      # On production env, the job is performed with Scheduler.
+      #
+      # @return [Object] the job class.
+      def perform_later
+        self.schedule
+        if Rails.env.development? or Rails.env.test?
+          job_class.set(wait: 5.seconds).perform_later(self.class.name, self.id.to_s, *self.args)
+        end
+        self
+      end
+
+      ##
+      # Performs job when queue is available.
+      # On test or development env, the job is performed with ActiveJob.
+      # On production env, the job is performed with Scheduler.
+      #
+      # @return [Object] the job class.
+      def perform_now
+        self.schedule
+        job_class.perform_now(self.class.name, self.id.to_s, *self.args)
+        self
+      end
+
+      ##
       # Immediately update the status to the given one.
       #
       # @param [Symbol] status the status to update.
@@ -93,6 +119,22 @@ module Scheduler
       # @return [nil]
       def status!(status)
         self.update(status: status)
+      end
+
+      ##
+      # Immediately increases progress to the given amount.
+      #
+      # @param [Float] amount the given progress amount.
+      def progress!(amount)
+        self.update(progress: amount.to_f) if amount.numeric?
+      end
+
+      ##
+      # Immediately increases progress by the given amount.
+      #
+      # @param [Float] amount the given progress amount.
+      def progress_by!(amount)
+        self.update(progress: progress + amount.to_f) if amount.numeric?
       end
 
       ##
