@@ -37,10 +37,10 @@ class SchedulerJob < ActiveJob::Base
   def handle_error(error, job_class, job_id, &block)
     if @job.present?
       @job.completed_at = Time.current
+      backtrace = error.backtrace.select { |line| line.include?('app') }.join("\n")
       if block_given?
-        yield error
+        yield @job, error, backtrace
       else
-        backtrace = error.backtrace.select { |line| line.include?('app') }.join("\n")
         @job.log(:error, "#{error.class}: #{error.message}")
         @job.log(:error, backtrace)
         @job.backtrace = backtrace
