@@ -9,11 +9,11 @@ GIT
 PATH
   remote: .
   specs:
-    rails-scheduler (0.1.0)
+    rails-mongoid-scheduler (0.1.1)
       bson_ext
-      mongoid (~> 7.0.2)
-      rails (~> 5.2.2)
-      whenever (~> 0.10.0)
+      mongoid (>= 7.0.0)
+      rails (>= 5.2)
+      whenever (>= 0.10.0)
 
 GEM
   remote: https://rubygems.org/
@@ -204,7 +204,7 @@ DEPENDENCIES
   pry-stack_explorer
   rails-controller-testing
   rails-dev-tools
-  rails-scheduler!
+  rails-mongoid-scheduler!
   rspec-collection_matchers
   rspec-rails
 
