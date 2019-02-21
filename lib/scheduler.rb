@@ -70,7 +70,7 @@ module Scheduler
       begin  
         Process.kill :TERM, Scheduler.pid
         FileUtils.rm(self.pid_file)
-      rescue Errno::ENOENT, Errno::ESRCH
+      rescue TypeError, Errno::ENOENT, Errno::ESRCH
       end
     end
 

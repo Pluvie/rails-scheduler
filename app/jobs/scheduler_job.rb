@@ -41,8 +41,9 @@ class SchedulerJob < ActiveJob::Base
       if block_given?
         yield @job, error, backtrace
       else
-        @job.log(:error, "#{error.class}: #{error.message}")
-        @job.log(:error, backtrace)
+        @job.error = error.class
+        @job.log :error, "#{error.class}: #{error.message}"
+        @job.log :error, backtrace
         @job.backtrace = backtrace
         @job.status!(:error)
       end
