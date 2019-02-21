@@ -9,7 +9,7 @@ GIT
 PATH
   remote: .
   specs:
-    rails-mongoid-scheduler (0.1.1)
+    rails-mongoid-scheduler (0.1.2)
       bson_ext
       mongoid (>= 7.0.0)
       rails (>= 5.2)
