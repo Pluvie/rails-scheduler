@@ -3,7 +3,7 @@ module Scheduler
 
     ##
     # Possible schedulable statuses.
-    STATUSES = [ :queued, :running, :completed, :error, :locked ]
+    STATUSES = [ :queued, :running, :completed, :warning, :error, :locked ]
 
     ##
     # Possible log levels.
@@ -29,6 +29,7 @@ module Scheduler
         scope :queued,      -> { where(status: :queued) }
         scope :running,     -> { where(status: :running) }
         scope :completed,   -> { where(status: :completed) }
+        scope :to_check,    -> { where(status: :warning) }
         scope :in_error,    -> { where(status: :error) }
         scope :locked,      -> { where(status: :locked) }
 
